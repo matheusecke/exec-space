@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ExecSpace</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <section class="create-section">
+        <h2>Criar Novo Ambiente</h2>
+        <form id="createEnvironmentForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="envName">Nome:</label>
+              <input
+                type="text"
+                id="envName"
+                name="name"
+                required
+                placeholder="Nome do ambiente"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cpuLimit">CPU (cores):</label>
+              <input
+                type="number"
+                id="cpuLimit"
+                name="cpu_limit"
+                min="0.1"
+                max="2"
+                step="0.1"
+                value="0.5"
+                required
+              />
+              <small>0.5 = 50% de 1 core</small>
+            </div>
+
+            <div class="form-group">
+              <label for="memoryMb">Memória (MB):</label>
+              <input
+                type="number"
+                id="memoryMb"
+                name="memory_mb"
+                min="64"
+                max="4096"
+                step="64"
+                value="512"
+                required
+              />
+              <small>64 a 4096 MB</small>
+            </div>
+
+            <div class="form-group">
+              <label for="ioWeight">I/O:</label>
+              <input
+                type="number"
+                id="ioWeight"
+                name="io_weight"
+                min="100"
+                max="1000"
+                step="50"
+                value="500"
+                required
+              />
+              <small>100 a 1000</small>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="scriptContent">Script:</label>
+            <textarea
+              id="scriptContent"
+              name="script_content"
+              rows="10"
+              required
+              placeholder="#!/bin/bash&#10;echo 'Hello World'"
+            ></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary">
+            Criar e Executar
+          </button>
+        </form>
+      </section>
+
+      <div id="notificationsContainer"></div>
+
+      <section class="list-section">
+        <div class="section-header">
+          <h2>Ambientes</h2>
+          <button class="btn btn-secondary" onclick="refreshEnvironments()">
+            Atualizar
+          </button>
+        </div>
+
+        <div id="environmentsList">
+          <p class="loading">Carregando...</p>
+        </div>
+      </section>
+    </div>
+
+    <div id="logsModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Logs</h3>
+          <span class="close" onclick="closeLogsModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+          <div id="logsContent" class="logs-content">
+            <p>Carregando logs...</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="refreshLogs()">
+            Atualizar
+          </button>
+          <button class="btn btn-primary" onclick="closeLogsModal()">
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="confirmModal" class="modal">
+      <div class="modal-content small">
+        <div class="modal-header">
+          <h3>Confirmar</h3>
+          <span class="close" onclick="closeConfirmModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+          <p id="confirmMessage"></p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeConfirmModal()">
+            Cancelar
+          </button>
+          <button class="btn btn-danger" id="confirmButton">Confirmar</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
