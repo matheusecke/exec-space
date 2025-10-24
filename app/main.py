@@ -1,7 +1,3 @@
-"""
-API FastAPI para gerenciamento de ambientes de execução isolados
-Utiliza namespaces e cgroups Linux diretamente para isolamento de processos
-"""
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -15,24 +11,19 @@ from database import get_db, engine
 from models import Base, Environment, EnvironmentStatus
 from environments import EnvironmentManager, EnvironmentConfig
 
-# Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Criar tabelas no banco de dados
 Base.metadata.create_all(bind=engine)
 
-# Inicializar FastAPI
 app = FastAPI(
     title="ExecSpace Platform",
     description="Plataforma para execução de scripts em ambientes isolados usando namespaces e cgroups",
     version="1.0.0"
 )
 
-# Inicializar Environment Manager
 env_manager = EnvironmentManager()
 
-# Modelos Pydantic para validação de dados
 class EnvironmentCreate(BaseModel):
     """Modelo para criação de ambiente"""
     name: str = Field(..., min_length=1, max_length=255, description="Nome do ambiente")
@@ -73,15 +64,13 @@ async def create_environment(
     """
     Criar um novo ambiente de execução isolado
     
-    - Cria ambiente com unshare (namespaces: PID, NET, MNT, UTS, IPC)
-    - Usa cgroups v2 para limitar recursos (CPU, memória, I/O)
-    - Salva metadados no banco de dados MySQL
+    - Cria ambiente com namespaces
+    - Usa cgroupspara limitar recursos (CPU, memória, I/O)
+    - Salva no banco de dados MySQL
     """
     try:
-        # Gerar ID único para o ambiente
         env_id = str(uuid.uuid4())
         
-        # Criar configuração
         config = EnvironmentConfig(
             env_id=env_id,
             script_content=env_data.script_content,
@@ -91,10 +80,8 @@ async def create_environment(
             name=env_data.name
         )
         
-        # Criar e executar ambiente
         env_info = env_manager.create_and_run_environment(config)
         
-        # Criar registro no banco de dados
         db_environment = Environment(
             id=env_id,
             name=env_data.name,
@@ -181,7 +168,6 @@ async def get_environment_logs(environment_id: str, db: Session = Depends(get_db
         if not environment:
             raise HTTPException(status_code=404, detail="Ambiente não encontrado")
         
-        # Obter logs
         logs = env_manager.get_environment_logs(environment_id)
         
         return {
@@ -209,7 +195,6 @@ async def stop_environment(environment_id: str, db: Session = Depends(get_db)):
         if not environment:
             raise HTTPException(status_code=404, detail="Ambiente não encontrado")
         
-        # Parar ambiente
         success = env_manager.stop_environment(environment_id)
         
         if success:
@@ -239,10 +224,8 @@ async def delete_environment(environment_id: str, db: Session = Depends(get_db))
         if not environment:
             raise HTTPException(status_code=404, detail="Ambiente não encontrado")
         
-        # Remover ambiente
         env_manager.remove_environment(environment_id)
         
-        # Remover do banco de dados
         db.delete(environment)
         db.commit()
         
@@ -257,10 +240,8 @@ async def delete_environment(environment_id: str, db: Session = Depends(get_db))
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Erro ao remover ambiente: {str(e)}")
 
-# Servir arquivos estáticos (frontend)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Health check endpoint
 @app.get("/health")
 async def health_check():
     """Verificar status da aplicação"""
@@ -269,4 +250,3 @@ async def health_check():
         "namespaces": "enabled",
         "database": "connected"
     }
-

@@ -155,8 +155,3 @@ Os recursos são limitados via cgroups v2:
 - **Scripts**: `/var/lib/execspace/environments/{env_id}.sh`
 - **PIDs**: `/var/lib/execspace/environments/{env_id}.pid`
 - **Logs**: `/var/log/execspace/{env_id}.log`
-
-## Licença
-
-Este projeto é parte de um trabalho acadêmico de Cloud Computing.
-

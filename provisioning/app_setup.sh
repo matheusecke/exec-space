@@ -4,24 +4,19 @@ echo "=========================================="
 echo "Configurando VM de Aplicação ExecSpace"
 echo "=========================================="
 
-# Atualizar sistema
 apt-get update
 apt-get upgrade -y
 
-# Instalar dependências
 apt-get install -y build-essential python3-pip python3-dev python3-venv util-linux libcap-dev
 
-# Criar ambiente virtual Python em /opt
 echo "Criando ambiente virtual Python..."
 python3 -m venv /opt/execspace-venv
 chown -R vagrant:vagrant /opt/execspace-venv
 
-# Instalar dependências Python
 echo "Instalando dependências Python..."
 sudo -u vagrant /opt/execspace-venv/bin/pip install --upgrade pip
 sudo -u vagrant /opt/execspace-venv/bin/pip install -r /home/vagrant/app/requirements.txt
 
-# Aguardar o MySQL estar pronto
 echo "Aguardando MySQL estar disponível..."
 sleep 15
 
@@ -53,15 +48,12 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
 
-# Iniciar serviço
 systemctl daemon-reload
 systemctl enable execspace
 systemctl start execspace
 
-# Aguardar inicialização
 sleep 5
 
-# Verificar status
 if systemctl is-active --quiet execspace; then
     echo "=========================================="
     echo "ExecSpace configurado e em execução!"
@@ -78,4 +70,5 @@ else
     echo "Logs: vagrant ssh app -c 'sudo journalctl -u execspace -n 50'"
     echo "=========================================="
 fi
+
 

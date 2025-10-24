@@ -1,16 +1,3 @@
-"""
-Gerenciador de Ambientes de Execução Isolados
-==============================================
-
-Este arquivo implementa isolamento usando diretamente as APIs do Linux
-para namespaces e cgroups, sem usar Docker.
-
-Requisitos:
-1. Permissões de root
-2. Python 3.8+
-3. Sistema Linux com cgroups v2
-"""
-
 import os
 import subprocess
 import uuid
@@ -37,14 +24,7 @@ class EnvironmentConfig:
 
 
 class EnvironmentManager:
-    """
-    Gerenciador de namespaces e cgroups
-    
-    Esta classe implementa isolamento sem Docker, usando:
-    - unshare: para criar namespaces
-    - /sys/fs/cgroup/: para limitar recursos
-    - /proc/: para monitorar processos
-    """
+    """Gerenciador de namespaces e cgroups"""
     
     def __init__(self):
         """Inicializar gerenciador"""
@@ -80,7 +60,7 @@ class EnvironmentManager:
                         try:
                             subtree.write_text(f"+{controller}\n")
                         except Exception:
-                            pass  # Já habilitado ou não disponível
+                            pass
             
             logger.info("Controladores habilitados no cgroup execspace")
                 
@@ -88,11 +68,10 @@ class EnvironmentManager:
             logger.error(f"Erro ao inicializar cgroup base: {e}")
     
     def create_and_run_environment(self, config: EnvironmentConfig) -> Dict[str, str]:
-        """Criar e executar ambiente isolado com namespaces e cgroups"""
+        """Criar e executar ambiente isolado"""
         try:
             logger.info(f"Criando ambiente: {config.name}")
             
-            # Criar cgroup e configurar limites
             cgroup_path = self._create_cgroup(config.env_id)
             self._configure_resource_limits(cgroup_path, config)
             
@@ -100,7 +79,6 @@ class EnvironmentManager:
             script_path = self._save_script(config.env_id, config.script_content)
             command = self._build_unshare_command(script_path, config.env_id)
             
-            # Executar processo em background
             log_file = self.logs_dir / f"{config.env_id}.log"
             with open(log_file, 'w') as log:
                 process = subprocess.Popen(
@@ -147,13 +125,13 @@ class EnvironmentManager:
         memory_max_file = cgroup_path / "memory.max"
         memory_max_file.write_text(f"{memory_bytes}\n")
         
-        # I/O: peso entre 1 e 10000 (opcional)
+        # I/O: peso entre 1 e 10000
         try:
             io_weight_file = cgroup_path / "io.weight"
             if io_weight_file.exists():
                 io_weight_file.write_text(f"default {config.io_weight}\n")
         except Exception:
-            pass  # I/O weight pode não estar disponível
+            pass
         
         logger.info(f"Limites: {config.cpu_limit} cores, {config.memory_mb}MB, I/O {config.io_weight}")
     
@@ -165,7 +143,7 @@ class EnvironmentManager:
         return script_path
     
     def _build_unshare_command(self, script_path: Path, env_id: str) -> list:
-        """Construir comando unshare com namespaces isolados (PID, mount, UTS, IPC)"""
+        """Construir comando unshare com namespaces isolados"""
         command = [
             "unshare",
             "--pid",          # Namespace de PID
@@ -180,7 +158,7 @@ class EnvironmentManager:
         return command
     
     def _add_to_cgroup(self, env_id: str):
-        """Adicionar processo atual ao cgroup (executado via preexec_fn)"""
+        """Adicionar processo atual ao cgroup"""
         cgroup_procs = self.cgroup_root / "execspace" / env_id / "cgroup.procs"
         try:
             cgroup_procs.write_text(f"{os.getpid()}\n")
@@ -188,7 +166,7 @@ class EnvironmentManager:
             logger.error(f"Erro ao adicionar ao cgroup: {e}")
     
     def _get_pid(self, env_id: str) -> Optional[int]:
-        """Obter PID do ambiente (retorna None se não encontrado)"""
+        """Obter PID do ambiente"""
         try:
             pid_file = self.environments_dir / f"{env_id}.pid"
             if pid_file.exists():
@@ -200,7 +178,7 @@ class EnvironmentManager:
         return None
     
     def get_environment_status(self, env_id: str) -> str:
-        """Obter status do ambiente (RUNNING, EXITED ou ERROR)"""
+        """Obter status do ambiente"""
         pid = self._get_pid(env_id)
         if not pid:
             return "ERROR"
@@ -302,4 +280,5 @@ class EnvironmentManager:
             })
         
         return environments
+
 

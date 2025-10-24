@@ -1,6 +1,3 @@
-"""
-Modelos do banco de dados usando SQLAlchemy
-"""
 from sqlalchemy import Column, String, Float, Integer, Text, TIMESTAMP, Enum
 from sqlalchemy.sql import func
 from database import Base
@@ -43,4 +40,5 @@ class Environment(Base):
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "process_id": self.process_id
         }
+
 
