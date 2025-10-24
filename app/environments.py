@@ -213,18 +213,16 @@ class EnvironmentManager:
             if not pid:
                 return False
             
-            # Tentar terminar graciosamente
             try:
                 os.kill(pid, signal.SIGTERM)
-                time.sleep(1)  # Aguardar 1 segundo
+                time.sleep(1)
             except OSError:
                 pass
             
-            # Forçar se ainda estiver rodando
             try:
                 os.kill(pid, signal.SIGKILL)
             except OSError:
-                pass  # Já terminou
+                pass
             
             logger.info(f"Ambiente parado: {env_id}")
             return True
@@ -236,10 +234,9 @@ class EnvironmentManager:
     def remove_environment(self, env_id: str) -> bool:
         """Remover ambiente completamente (processo + cgroup + arquivos)"""
         try:
-            # 1. Parar processo
             self.stop_environment(env_id)
             
-            # 2. Remover cgroup (matar processos restantes)
+            # Remover cgroup
             cgroup_path = self.cgroup_root / "execspace" / env_id
             if cgroup_path.exists():
                 procs_file = cgroup_path / "cgroup.procs"
@@ -254,7 +251,7 @@ class EnvironmentManager:
                 time.sleep(0.5)  # Aguardar processos terminarem
                 cgroup_path.rmdir()
             
-            # 3. Remover arquivos
+            # Remover arquivos
             for filename in [f"{env_id}.pid", f"{env_id}.sh"]:
                 (self.environments_dir / filename).unlink(missing_ok=True)
             (self.logs_dir / f"{env_id}.log").unlink(missing_ok=True)
